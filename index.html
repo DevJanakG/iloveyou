@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proposal for Anusree</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;800&family=Great+Vibes&family=Courier+Prime&display=swap');
+
+        :root {
+            --primary: #ff0055;
+            --accent: #00f3ff;
+            --bg: #050505;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* --- BACKGROUND PARTICLES --- */
+        #canvas {
+            position: fixed; top: 0; left: 0; z-index: -1;
+        }
+
+        /* --- SCENES --- */
+        .scene {
+            height: 100vh; 
+            width: 100%;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            position: absolute; top: 0; left: 0;
+            transition: all 1s ease-in-out;
+            padding: 20px 20px; text-align: center;
+            background: rgba(0,0,0,0.4); /* Slight dim */
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .hidden { opacity: 0; pointer-events: none; transform: scale(1.1); filter: blur(10px); }
+        .active { opacity: 1; pointer-events: all; transform: scale(1); filter: blur(0); }
+
+        /* --- TYPOGRAPHY --- */
+        h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 20px; text-shadow: 0 0 20px var(--primary); }
+        h2 { font-family: 'Great Vibes', cursive; color: var(--accent); font-size: 2rem; margin-bottom: 15px; }
+        p { font-size: 1.1rem; font-weight: 300; opacity: 0.9; max-width: 600px; line-height: 1.6; margin-bottom: 20px; }
+        
+        /* --- UI ELEMENTS --- */
+        .btn {
+            padding: 15px 40px; border: 1px solid var(--accent);
+            background: rgba(0, 243, 255, 0.1); color: white;
+            font-size: 1rem; cursor: pointer; margin-top: 20px;
+            transition: 0.3s; text-transform: uppercase; letter-spacing: 2px;
+            backdrop-filter: blur(5px); border-radius: 50px;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+        }
+        .btn:hover { background: var(--accent); color: black; box-shadow: 0 0 40px var(--accent); }
+
+        /* --- SCENE 1: LOADER --- */
+        .loader-bar { width: 200px; height: 2px; background: #333; margin: 20px auto; position: relative; overflow: hidden; }
+        .loader-fill { height: 100%; background: var(--accent); width: 0%; transition: width 7s linear; }
+
+        /* --- SCENE 2: CARDS --- */
+        .card-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        .glass-card {
+            background: var(--glass); border: 1px solid var(--border); padding: 20px;
+            border-radius: 15px; width: 140px; backdrop-filter: blur(10px);
+            animation: float 6s infinite ease-in-out;
+        }
+        .glass-card .score { font-size: 1.8rem; font-weight: bold; margin-top: 10px; }
+
+        /* --- DESTINY ROWS --- */
+        .destiny-rows { display: flex; flex-direction: column; gap: 25px; margin-top: 30px; max-width: 900px; width: 90%; }
+        .destiny-row {
+            display: flex; gap: 50px; align-items: center;
+            background: linear-gradient(135deg, rgba(255, 0, 85, 0.1), rgba(0, 243, 255, 0.05));
+            border: 2px solid var(--accent);
+            padding: 35px 40px;
+            border-radius: 25px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 0 30px rgba(255, 0, 85, 0.3), inset 0 0 20px rgba(0, 243, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .destiny-row:hover { transform: translateY(-5px); box-shadow: 0 0 50px rgba(255, 0, 85, 0.5), inset 0 0 30px rgba(0, 243, 255, 0.15); }
+        .destiny-row .title {
+            min-width: 180px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: left;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .destiny-row .description {
+            font-size: 1.1rem;
+            font-weight: 400;
+            text-align: left;
+            line-height: 1.8;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- SCENE 3: CHECKLIST --- */
+        .bucket-list {
+            text-align: left; max-width: 500px; width: 90%;
+            background: rgba(0,0,0,0.5); padding: 30px; border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+        .list-item {
+            display: flex; align-items: center; gap: 15px; margin-bottom: 15px;
+            font-size: 1rem; opacity: 0.8; transition: 0.3s; cursor: pointer;
+        }
+        .list-item:hover { opacity: 1; transform: translateX(10px); color: var(--accent); }
+        .check-box {
+            width: 20px; height: 20px; border: 2px solid var(--primary);
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+        }
+
+        /* --- SCENE 4: LETTERS --- */
+        .envelopes-grid { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 30px; }
+        .envelope {
+            width: 160px; height: 100px; background: #222; border-top: 1px solid #444;
+            position: relative; cursor: pointer; transition: 0.3s; display: flex;
+            justify-content: center; align-items: center; flex-direction: column;
+            border: 1px solid var(--accent);
+        }
+        .envelope:hover { transform: translateY(-10px); box-shadow: 0 0 20px var(--accent); background: var(--accent); color: black; }
+        .env-label { font-size: 0.8rem; margin-top: 10px; font-weight: bold; }
+
+        /* --- SCENE 5: POEM --- */
+        .poem-container {
+            font-family: 'Courier Prime', monospace;
+            text-align: left; max-width: 600px; padding: 20px;
+            border-left: 2px solid var(--primary);
+            background: linear-gradient(90deg, rgba(255,0,85,0.1), transparent);
+        }
+        .poem-line { margin-bottom: 15px; opacity: 0; transform: translateY(20px); transition: 0.8s; }
+        .poem-line.visible { opacity: 1; transform: translateY(0); }
+
+        /* --- SCENE 6: PROPOSAL --- */
+        .proposal-box { 
+            background: rgba(0,0,0,0.9); 
+            padding: 35px; 
+            border-radius: 20px; 
+            border: 2px solid var(--primary);
+            max-width: 90%;
+            margin: 0 auto;
+        }
+        .buttons-container {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 25px;
+            max-width: 100%;
+        }
+        .btn-yes { 
+            background: linear-gradient(135deg, var(--primary), #ff3366);
+            border: 2px solid var(--primary);
+            font-size: 1.2rem;
+            padding: 16px 50px;
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(255, 0, 85, 0.3);
+            min-width: 220px;
+            white-space: nowrap;
+        }
+        .btn-yes:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(255, 0, 85, 0.6);
+            background: linear-gradient(135deg, #ff3366, #ff0055);
+        }
+        .btn-yes:active {
+            transform: translateY(-1px);
+        }
+        .btn-no { 
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            color: #aaa;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            backdrop-filter: blur(5px);
+            white-space: nowrap;
+        }
+        .btn-no:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #fff;
+        }
+        .btn-no.dodging {
+            position: fixed;
+            z-index: 9999;
+        }
+
+        /* --- MODAL --- */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 2000; display: none;
+            justify-content: center; align-items: center; padding: 20px;
+        }
+        .modal-paper {
+            background: #fff; color: #000; padding: 40px; max-width: 500px;
+            font-family: 'Courier Prime', monospace; line-height: 1.6;
+            transform: rotate(-1deg); position: relative;
+        }
+        .close-modal { position: absolute; top: 10px; right: 20px; font-size: 2rem; cursor: pointer; }
+
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        /* --- CAMERA FLASH EFFECT --- */
+        .camera-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            animation: flashEffect 0.6s ease-out;
+        }
+
+        @keyframes flashEffect {
+            0% { opacity: 0; }
+            20% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .screenshot-btn {
+            margin-top: 20px;
+            padding: 12px 35px;
+            background: linear-gradient(135deg, rgba(255, 0, 85, 0.2), rgba(0, 243, 255, 0.2));
+            border: 2px solid var(--accent);
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 1px;
+        }
+        .screenshot-btn:hover {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            transform: translateY(-3px);
+            box-shadow: 0 5px 30px rgba(0, 243, 255, 0.5);
+        }
+        .screenshot-btn i {
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.5rem; }
+            p { font-size: 0.95rem; max-width: 90%; }
+            .scene { padding: 15px 15px; }
+            #scene6 h2 { font-size: 1.8rem !important; }
+            #scene6 p { font-size: 0.85rem; }
+            #scene6 p:first-of-type { font-size: 1.1rem !important; }
+            .glass-card { width: 45%; }
+            .poem-container { font-size: 0.9rem; }
+            .destiny-row {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px 25px;
+            }
+            .destiny-row .title {
+                min-width: auto;
+                font-size: 1.2rem;
+            }
+            .destiny-row .description {
+                font-size: 1rem;
+                text-align: center;
+            }
+            .btn { padding: 12px 30px; font-size: 0.9rem; }
+            .btn-yes {
+                font-size: 1rem;
+                padding: 12px 32px;
+                min-width: 140px;
+            }
+            .btn-no {
+                font-size: 0.7rem;
+                padding: 8px 14px;
+            }
+            .bucket-list { padding: 20px; max-width: 95%; }
+            .list-item { font-size: 0.9rem; gap: 12px; margin-bottom: 12px; }
+            .envelope { width: 140px; height: 85px; }
+            .env-label { font-size: 0.7rem; }
+            .proposal-box { 
+                padding: 25px 20px; 
+                max-width: 95%;
+            }
+            .buttons-container { 
+                gap: 12px; 
+                flex-wrap: nowrap;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .scene { padding: 20px 15px; }
+            #scene6 h2 { font-size: 2rem !important; }
+            .proposal-box {
+                padding: 30px 25px;
+            }
+            .buttons-container {
+                gap: 20px;
+            }
+            .btn-yes {
+                font-size: 1.1rem;
+                padding: 14px 40px;
+                min-width: 180px;
+            }
+            .btn-no {
+                font-size: 0.75rem;
+                padding: 9px 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 1.5rem; }
+            h2 { font-size: 1.3rem; }
+            p { font-size: 0.9rem; }
+            .scene { padding: 12px 12px; }
+            #scene6 h2 { font-size: 1.4rem !important; }
+            #scene6 p { font-size: 0.8rem; }
+            #scene6 p:first-of-type { font-size: 1rem !important; }
+            .card-container { gap: 15px; }
+            .glass-card { width: 85%; max-width: 120px; }
+            .glass-card .score { font-size: 1.5rem; }
+            .destiny-rows { gap: 15px; width: 95%; }
+            .destiny-row {
+                padding: 20px 15px;
+                gap: 15px;
+            }
+            .destiny-row .title { font-size: 1rem; }
+            .destiny-row .description { font-size: 0.9rem; }
+            .btn { padding: 10px 25px; font-size: 0.85rem; }
+            .btn-yes {
+                font-size: 0.95rem;
+                padding: 11px 28px;
+                min-width: 130px;
+                flex: 1;
+            }
+            .btn-no {
+                font-size: 0.65rem;
+                padding: 7px 12px;
+            }
+            .bucket-list { padding: 15px; max-width: 100%; }
+            .list-item { font-size: 0.85rem; }
+            .poem-container { 
+                font-size: 0.85rem;
+                padding: 15px;
+                max-width: 95%;
+            }
+            .poem-line { margin-bottom: 12px; }
+            .envelope { width: 120px; height: 75px; }
+            .env-label { font-size: 0.65rem; margin-top: 5px; }
+            .proposal-box { 
+                padding: 20px 15px;
+                max-width: 95%;
+            }
+            .buttons-container { 
+                gap: 8px; 
+                flex-wrap: nowrap;
+                width: 100%;
+            }
+            .btn-no.dodging {
+                position: fixed !important;
+                z-index: 9999 !important;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .scene { 
+                padding: 40px 20px; 
+                min-height: auto;
+            }
+            h1 { font-size: 3rem; }
+            p { font-size: 1.15rem; max-width: 700px; }
+            .btn { padding: 16px 50px; font-size: 1.05rem; }
+            .buttons-container { 
+                gap: 40px;
+                justify-content: center;
+            }
+            .btn-yes {
+                font-size: 1.4rem;
+                padding: 20px 70px;
+                min-width: 320px;
+            }
+            .btn-no {
+                font-size: 0.9rem;
+                padding: 12px 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas"></canvas>
+
+    <audio id="bgMusic" loop>
+        <source src="aboutYou.MP3" type="audio/mpeg">
+    </audio>
+
+    <div class="scene active" id="scene1">
+        <p style="letter-spacing: 3px;">PROTOCOL: SOUL CONNECTION.<br>INITIATING DM FROM DESTINY</p>
+        <h1>14 days</h1>
+        <p>Was all it took to rewrite my code.<br />Matchmaking handled by destiny herself,<br />choosing two souls made for each other<br />from a sea of 8 billion.</p>
+        <div class="loader-bar"><div class="loader-fill" id="loader"></div></div>
+        <button class="btn" onclick="startExperience()">Initiate</button>
+    </div>
+
+    <div class="scene hidden" id="scene2">
+        <h2>The Destiny Report</h2>
+        <h1>SUBJECT: Anusree</h1>
+        <div class="card-container">
+            <div class="glass-card"><div class="score" style="color:#00f3ff">100%</div><h3>Vibe Match</h3></div>
+            <div class="glass-card"><div class="score" style="color:#ff0055">High</div><h3>Chatpati level</h3></div>
+            <div class="glass-card"><div class="score" style="color:#ffcc00">S-Tier</div><h3>Cuteness factor</h3></div>
+        </div>
+        <br>
+        <h3 style="font-size: 48px;">+</h3>
+        <br>
+        <h1>SUBJECT: Janak</h1>
+        <div class="card-container">
+            <div class="glass-card"><div class="score" style="color:#00f3ff">100%</div><h3>Freak Match</h3></div>
+            <div class="glass-card"><div class="score" style="color:#ff0055">High</div><h3>Chaos meter</h3></div>
+            <div class="glass-card"><div class="score" style="color:#ffcc00">S-Tier</div><h3>Romance level</h3></div>
+        </div>
+        <!-- <div class="destiny-rows">
+            <div class="destiny-row">
+                <div class="title">Freak level:</div>
+                <div class="description">Off the charts</div>
+            </div>
+            <div class="destiny-row">
+                <div class="title">Yapper level:</div>
+                <div class="description">Her eyes speak more than she ever could</div>
+            </div>
+            <div class="destiny-row">
+                <div class="title">Shyness level:</div>
+                <div class="description">Her lips, the twitch of her eyebrows, the subtle change in her expressions are the only boldness I need</div>
+            </div>
+        </div> -->
+        <button class="btn" onclick="nextScene(3)">See Our Future</button>
+    </div>
+
+    <div class="scene hidden" id="scene3">
+        <h2>The Destiny's Plan</h2>
+        <h1>OUR TO-DO LIST</h1>
+        <div class="bucket-list">
+            <div class="list-item"><div class="check-box"></div>Our first reckless little hangout.</div>
+            <div class="list-item"><div class="check-box"></div>Making out on a beach at sunset.</div>
+            <div class="list-item"><div class="check-box"></div>Stargazing on a hilltop with a bonfire & guitar.</div>
+            <div class="list-item"><div class="check-box"></div>Yapping about everything & nothing all night.</div>
+            <div class="list-item"><div class="check-box"></div>Dancing in the rain on an empty road at midnight.</div>
+            <div class="list-item"><div class="check-box"></div>Letting the world around us blur out.</div>
+            <div class="list-item"><div class="check-box"></div>Soul-blending sex on a random, stolen night.</div>
+            <div class="list-item"><div class="check-box"></div>Traveling the ups & downs of life together.</div>
+        </div>
+        <button class="btn" onclick="nextScene(4)">Read My Mind</button>
+    </div>
+
+    <div class="scene hidden" id="scene4">
+        <h2>Confessions</h2>
+        <h1>CHOOSE A LETTER</h1>
+        <div class="envelopes-grid">
+            <div class="envelope" onclick="openLetter('innocent')">
+                <i class="fas fa-envelope"></i>
+                <div class="env-label">For The Innocent Side</div>
+            </div>
+            <div class="envelope" onclick="openLetter('cute')">
+                <i class="fas fa-heart"></i>
+                <div class="env-label">For The Cute Side</div>
+            </div>
+            <div class="envelope" onclick="openLetter('horny')">
+                <i class="fas fa-fire"></i>
+                <div class="env-label">For The Freaky Side</div>
+            </div>
+        </div>
+        <button class="btn" onclick="nextScene(5)">I Have One Request...</button>
+    </div>
+
+    <div class="scene hidden" id="scene5">
+        <h1>WILL YOU PLEASE STRIP FOR ME?</h1>
+        <div class="poem-container">
+            <div class="poem-line">Not your clothes,</div>
+            <div class="poem-line">Not your body,</div>
+            <div class="poem-line">But the armor you wear when you think no one is looking.</div>
+            <div class="poem-line" style="margin-top:20px;">Take off the apology stitched to your skin.</div>
+            <div class="poem-line">Take off the careful, the quiet, the small.</div>
+            <div class="poem-line">Take off the version of you that makes everyone comfortable but you.</div>
+            <div class="poem-line" style="margin-top:20px;">Stand there, bare in your fury, naked in your wanting.</div>
+            <div class="poem-line" style="color:var(--primary); font-weight:bold;">Let me worship you for it.</div>
+        </div>
+        <button class="btn" onclick="nextScene(6)">The Final Question</button>
+    </div>
+
+    <div class="scene hidden" id="scene6">
+        <h2 style="font-size: 3rem;">Majhi Hoshil Ka?</h2>
+        
+        <div class="proposal-box">
+            <p style="font-size: 1.5rem; margin-bottom: 30px; font-weight: bold;">
+                Will you be my girlfriend?
+            </p>
+            <p style="font-size: 0.9rem; color:#aaa; margin-bottom: 30px;">Don't overthink it, just say yes❤️</p>
+            <div class="buttons-container">
+                <button class="btn-yes" onclick="sheSaidYes()">YES, I'm Yours</button>
+                <button class="btn-no" id="noBtn" onmouseover="dodge(event)" onclick="dodge(event)">No</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="scene hidden" id="scene7">
+        <h1>SHE SAID YES!</h1>
+        <h2 style="font-size: 4rem; margin-top:20px;">I Love You</h2>
+        <p>Anniversary Date: 15 Sep 2026<span id="date"></span></p>
+        <p id="screenshotPrompt" style="margin-top: 30px;">(Take a screenshot immediately. This is our Day 1.)</p>
+        <button class="screenshot-btn" id="screenshotBtn" onclick="captureScreenshot()">
+            <i class="fas fa-camera"></i>
+            Take Another Screenshot
+        </button>
+    </div>
+
+    <div class="modal" id="letterModal">
+        <div class="modal-paper">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- LOGIC ---
+        function startExperience() {
+            document.getElementById('loader').style.width = '100%';
+            document.getElementById('bgMusic').volume = 0.5;
+            document.getElementById('bgMusic').play().catch(e => console.log("Audio interaction needed"));
+            
+            setTimeout(() => { nextScene(2); }, 7000);
+        }
+
+        function nextScene(n) {
+            document.querySelectorAll('.scene').forEach(el => {
+                el.classList.remove('active');
+                el.classList.add('hidden');
+            });
+            const target = document.getElementById('scene' + n);
+            target.classList.remove('hidden');
+            target.classList.add('active');
+
+            // Trigger Poem Animation
+            if(n === 5) {
+                const lines = document.querySelectorAll('.poem-line');
+                lines.forEach((line, index) => {
+                    setTimeout(() => {
+                      line.classList.add('visible');
+                    }, index * 1000); // 1 second delay per line
+                });
+            }
+        }
+
+        // LETTERS CONTENT
+        const letters = {
+            innocent: "<strong>To Your Innocent Side,</strong><br><br>I know how the world has treated you. I can feel it when you cry quietly, when people take advantage of your kindness, when your eyes fill with tears just because I spoke too harshly. I notice how you hold on to me like losing sight of me for even a minute would hurt. I promise to handle you gently, to never let fear make you hide your real self again. The way you talk, the way you simply are...it’s pure peace. You calm the chaos around me. I swear to protect that peace, even when everything else goes wild. Be soft with me. I’ve got you.",
+            cute: "<strong>To Your Cute Side,</strong><br><br>I don’t know your coffee order yet, or your favorite movie, but somehow, I already know your vibe...it matches mine so perfectly it almost feels like we’re breaking a rule just by existing. You’re the perfect mix of meethi and chatpati, soft and unfiltered. I picture your pout when I tease you, that sparkle in your eyes when you see me, the way you throw yourself into my arms without thinking twice. You’re sarcasm and sunshine wrapped in one, and I can’t get enough of either.",
+            horny: "<strong>To Your Freaky Side,</strong><br><br>We’ll always try to outdo each other...who’s wilder, who’s more lost in the moment. Our bedsheets will remember us, holding the scent of every night we burn through. The way we kiss will feel like crossing between universes, and when we finally rest in each other’s arms, it’ll feel like our souls have fused. The love we are gonna make together won’t just be passion...it’ll be something close to nirvana."
+        };
+
+        function openLetter(type) {
+            document.getElementById('modalContent').innerHTML = letters[type];
+            document.getElementById('letterModal').style.display = 'flex';
+        }
+        function closeModal() {
+            document.getElementById('letterModal').style.display = 'none';
+        }
+
+        // Cute rejection messages
+        const cuteMessages = [
+            "Are you sure?",
+            "Think again 🥺",
+            "But I love you 💔",
+            "One more chance? 😭",
+            "Pleeeease? 🥹",
+            "I'll be sad forever 💀",
+            "Okay but like... really? 🥰",
+            "You're breaking my heart 💔",
+            "Can't I get a maybe? 🤔",
+            "What if it's fate? ✨",
+            "You don't mean that 👉👈",
+            "Let's talk about this 🥺",
+            "I'll wait forever 🕐",
+            "Did you not read before? 📖",
+            "My mom's gonna be sad 😢",
+            "Your loss, really 😒",
+            "Don't be like this 😩",
+      "Pretty please with cherries? 🍒",
+            "I got you flowers 🌹",
+            "We could be legendary 👑",
+            "The universe chose us 🌌",
+            "Destiny's a myth but this isn't 🔮",
+            "Say yes, I'm begging 🙏",
+            "Is it something I said? 😫",
+            "You're so mean right now 😒",
+            "My heart can't take this 💔",
+            "Give me a reason why not 👀",
+            "We'll be cute together 👶",
+            "I promise I'm worth it 💯",
+            "Your happiness matters to me 🌈",
+            "Let me prove it to you 💪",
+            "We have chemistry! ⚗️",
+            "Don't reject this masterpiece 🎨",
+            "Be spontaneous for once! 🎪",
+            "Say yes or I'll be here forever 👻",
+            "This is your sign 🪧",
+            "The answer is yes, trust me 🔮",
+            "You'll regret this! (just kidding) 😉",
+            "What's one more yes? 🤷",
+            "I'm not giving up that easily 💪",
+            "Your resistance is futile 🚀",
+            "I'm clingy but in a cute way 🐶",
+            "Let's build something beautiful 🏗️",
+            "Say yes and I'll stop bothering you... jk I won't 😂",
+            "My heart's in your hands now 🤲",
+            "Reject me? That's a funny joke 😅",
+            "I saw this coming from a mile away 👁️",
+            "You know you want to 😏",
+            "Just one yes, is that too much? 👉👈",
+            "I'd climb mountains for you 🏔️",
+            "Swimming oceans, that's the plan 🌊",
+            "Your smile when I ask is enough 😊",
+            "But seriously tho... yes? 🥺",
+            "I can't imagine anyone else 💭",
+            "This feels right, doesn't it? 🎯",
+            "Stop being adorable about the rejection 😤",
+            "That button's getting tired dodge 😴",
+            "I'm being patient but... 🕰️"
+        ];
+
+        let dodgeCount = 0;
+
+        // DODGE BUTTON
+        function dodge(e) {     
+          if (e) e.preventDefault();
+            const btn = document.getElementById('noBtn');
+            const yesBtn = document.querySelector('.btn-yes');
+            
+            // Add dodging class to enable fixed positioning
+            btn.classList.add('dodging');
+            
+            // Set cute messages
+            if (dodgeCount < cuteMessages.length) {
+                btn.innerText = cuteMessages[dodgeCount];
+                dodgeCount++;
+            }
+            
+            // Add smooth transition
+            btn.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            
+            // Calculate positions and safe zone
+            const btnWidth = btn.offsetWidth || 80;
+            const btnHeight = btn.offsetHeight || 40;
+            const margin = 40;
+            const padding = 180;
+            
+            let x, y, valid = false;
+            let attempts = 0;
+            
+            while (!valid && attempts < 10) {
+                x = Math.random() * (window.innerWidth - btnWidth - margin * 2) + margin;
+                y = Math.random() * (window.innerHeight - btnHeight - margin * 2) + margin;
+                
+                // Get yes button position
+                const yesBtnRect = yesBtn.getBoundingClientRect();
+                
+                // Check if new position would overlap or be too close to yes button
+                const noLeft = x;
+                const noRight = x + btnWidth;
+                const noTop = y;
+                const noBottom = y + btnHeight;
+                
+                const yesPaddedLeft = yesBtnRect.left - padding;
+                const yesPaddedRight = yesBtnRect.right + padding;
+                const yesPaddedTop = yesBtnRect.top - padding;
+                const yesPaddedBottom = yesBtnRect.bottom + padding;
+                
+                // Check collision with padded yes button zone
+                if (!(noRight > yesPaddedLeft && noLeft < yesPaddedRight &&
+                      noBottom > yesPaddedTop && noTop < yesPaddedBottom)) {
+                    valid = true;
+                }
+                attempts++;
+            }
+            
+            btn.style.left = x + 'px';
+            btn.style.top = y + 'px';
+        }
+
+        function sheSaidYes() {
+            for(let i=0; i<200; i++) particlesArray.push(new 
+            Particle(window.innerWidth/2, window.innerHeight/2, true));
+            nextScene(7);
+            
+            // Auto-capture screenshot after a short delay
+            setTimeout(() => {
+                captureScreenshot();
+            }, 2000);
+        }
+
+        // Screenshot function with camera flash effect
+        function captureScreenshot() {
+            // Hide screenshot prompt and button
+            const promptText = document.getElementById('screenshotPrompt');
+            const screenshotBtn = document.getElementById('screenshotBtn');
+            promptText.style.display = 'none';
+            screenshotBtn.style.display = 'none';
+            
+            // Create flash effect
+            const flash = document.createElement('div');
+            flash.className = 'camera-flash';
+            document.body.appendChild(flash);
+            
+            // Play camera shutter sound (optional - using Web Audio API)
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = 800;
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+            
+            // Remove flash after animation
+            setTimeout(() => flash.remove(), 600);
+            
+            // Capture the scene
+            setTimeout(() => {
+                const scene7 = document.getElementById('scene7');
+                html2canvas(scene7, {
+                    backgroundColor: '#050505',
+                    scale: 2,
+                    logging: false,
+                    useCORS: true
+                }).then(canvas => {
+                    // Convert to blob and download
+                    canvas.toBlob(blob => {
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.download = `Our_Day_1_${new Date().getTime()}.png`;
+                        link.href = url;
+                        link.click();
+                      URL.revokeObjectURL(url);
+                        
+                        // Show elements again after capture
+                        promptText.style.display = 'block';
+                        screenshotBtn.style.display = 'inline-flex';
+                    });
+                });
+            }, 200);
+        }
+
+        // --- PARTICLES ---
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particlesArray = [];
+        
+        class Particle {
+            constructor(x, y, explosion = false) {
+                this.x = x || Math.random() * canvas.width;
+                this.y = y || Math.random() * canvas.height;
+                this.size = Math.random() * 3;
+                this.speedX = (Math.random() * 1) - 0.5;
+                this.speedY = (Math.random() * 1) - 0.5;
+                if (explosion) {
+                    this.speedX = (Math.random() * 10) - 5;
+                    this.speedY = (Math.random() * 10) - 5;
+                    this.size = Math.random() * 4 + 2;
+                    this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                } else {
+                    this.color = 'rgba(255, 255, 255, 0.5)';
+                }
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.size > 0.1) this.size -= 0.02;
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        function init() { for (let i = 0; i < 100; i++) particlesArray.push(new Particle()); }
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+                particlesArray[i].draw();
+                if (particlesArray[i].size <= 0.1) {
+                    particlesArray.splice(i, 1);
+                    i--;
+                    if(particlesArray.length < 100) particlesArray.push(new Particle());
+                }
+            }
+          requestAnimationFrame(animate);
+        }
+        init(); animate();
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+    </script>
+</body>
+</html>
